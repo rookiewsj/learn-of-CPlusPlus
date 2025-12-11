@@ -32,10 +32,10 @@ namespace jj01//array容器的测试程序
             c[i]=rand();
         }
         cout<<"milliseconds: "<<(clock()-timestart)<<endl;
-        cout<<"array-size: "<<c.size()<<endl;
-        cout<<"array-front: "<<c.front()<<endl;
-        cout<<"array-back: "<<c.back()<<endl;
-        cout<<"attay-data: "<<c.data()<<endl;
+        cout<<"array-size: "<<c.size()<<endl;//
+        cout<<"array-front: "<<c.front()<<endl;//
+        cout<<"array-back: "<<c.back()<<endl;//
+        cout<<"attay-data: "<<c.data()<<endl;//
 
         long target=get_a_target_long();
 
