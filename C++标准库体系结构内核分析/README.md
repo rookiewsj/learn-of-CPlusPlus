@@ -53,36 +53,115 @@ ___
 ### 2.1 空间分配器(allocator)
 
 ### 2.2 迭代器概念与traits编程技法
+___
 **迭代器的重要性？为什么需要学迭代器？**  
 &emsp;&emsp;从STL的中心思想入手，
 STL的中心思想：将容器与算法分开，彼此独立设计，最后再用一个胶着剂将它们撮合在一起。
 而容器和算法的泛型化，从物理实现上并不困难，C++的class template 和function template可分别达成目标。
 所以，如何设计出两者之间的良好胶着剂，即如何设计出良好的迭代器？这才是难题。  
+___  
 
 **那么，什么是迭代器呢？(迭代器概念)**  
-&emsp;&emsp;迭代器是一种抽象的设计概念，现实程序语言中并没有直接对应于这个概念的实物。
-**iterator模式的定义**：
+&emsp;&emsp;迭代器是一种抽象的设计概念，现实程序语言中并没有直接对应于这个概念的实物。  
+&emsp;&emsp;**iterator模式的定义**：
 提供一种方法，使之能够依序访问某个容器所含的各个元素，而无需暴露该容器的内部表述方式.  
-&emsp;&emsp;迭代器扮演容器与算法之间的胶合剂，是所谓的泛型指针。
+&emsp;&emsp;迭代器扮演容器与算法之间的胶合剂，是所谓的**泛型指针**。
 从实现的角度来看，迭代器是一种将operator*、operator->、operator++、operator--等指针相关操作予以重载的class template（有点像类指针的类）  
-
 &emsp;&emsp;我们根据定义不难发现，每种容器可能都有对应的iterator，下面是一个例子
-P115
-```
 
-```
-通过这个例子，感觉迭代器好像依附在容器之下，**真的是这样吗？** 那么有没有独立、泛用的迭代器呢？我们又该如何设计呢？  
+```P115
+#include<iostream>
+#include<vector>
+#include<list>
+#include<deque>
+#include<algorithm>
+using namespace std;
 
+template<class T,class inputiterator> inputiterator myfind(inputiterator first,inputiterator last,const T value) {
+    while (first!=last&&*first!=value) {
+        ++first;
+    }
+    return first;
+}
+//若不修改函数名，可能会出现函数调用不明确的问题
+int main() {
+    const int arraysize=7;
+    int ia[7]={0,1,2,3,4,5,6};
+    vector<int> ivect(ia,ia+arraysize);
+    list<int> ilist(ia,ia+arraysize);
+    deque<int> ideque(ia,ia+arraysize);
+
+    vector<int>::iterator it1=myfind(ivect.begin(),ivect.end(),4);
+    if (it1==ivect.end()) {
+        cout<<"4 not found"<<endl;
+    }else {
+        cout<<*it1<<"found"<<endl;
+    }
+
+    list<int>::iterator it2=myfind(ilist.begin(),ilist.end(),5);
+    if (it2==ilist.end()) {
+        cout<<"5 not found"<<endl;
+    }else {
+        cout<<*it2<<"found"<<endl;
+    }
+
+    deque<int>::iterator it3=myfind(ideque.begin(),ideque.end(),7);
+    if (it3==ideque.end()) {
+        cout<<"7 not found"<<endl;
+    }else {
+        cout<<*it3<<"found"<<endl;
+    }
+    return 0;
+}
+```
+&emsp;&emsp;通过这个例子，感觉迭代器好像依附在容器之下，**真的是这样吗？** 那么有没有独立、泛用的迭代器呢？我们又该如何设计呢？  
+___
 **如何设计、实现一个良好的iterator？ 一个良好的iterator需要具备什么东西？**  
 &emsp;&emsp;我们想要设计出一个iterator，使其能够遍历container的元素，第一想法就是C语言中的指针。通过指针来指向容器中的各个元素，从而实现遍历。但是，指针的缺点很明显，它只是一个地址，既无法持有自己的状态又无法达到该有的适配性(注：如果难以理解，可以对照一下函数指针的缺点，请点[这里]())。  
 &emsp;&emsp;所以，迭代器不能是一个单纯的指针，它应该是一种行为类似指针的对象，即是一种smart pointer。
 因此为了实现这一目的，我们需要创建一个class，这个class是类指针的，所以我们需要对operator* 与operator->进行操作符重载。  
 &emsp;&emsp;C++标准库中的auto_pr可供我们参考，源码：
-P116
-```cpp
-template
+```auto_ptr源码简化版
+template <class T> class auto_ptr {//虽然，这个智能指针已经被弃用了。但其类声明值得看一看
+    public:
+        explicit auto_ptr(T* p=0):ptr(p){}//explicit
+        template<class U> auto_ptr(auto_ptr<U>& rhs):ptr(rhs.release()){}
+        //在这串代码片段中，release() 函数的定义其实缺失了，但它是 auto_ptr 机制的核心。
+        //rhs.release() 的作用是交出所有权。它让 rhs（Right Hand Side，即被拷贝的那个对象）放弃对指针的控制，并返回该指针，以便让新对象接管它。
+        ~auto_ptr(){delete ptr;}
+        template<class U> auto_ptr<U>& operator=(auto_ptr<U>& rhs) {
+            if (this!=&rhs) reset(rhs.release());
+            return *this;
+        }
+        //big three
+
+        T& operator*()const{return *ptr;}
+        T* operator->()const{return ptr;}
+        //为实现类指针的class所要做的努力
+        T* get() const{return ptr;}
+
+    private:
+        T* ptr;
+};
 ```
-```
+**练习：为list(链表)设计一个迭代器**  
+&emsp;&emsp;要想为链表设计一个迭代器，首先要对list的实现细节非常了解
+
+
+
+
+
+___
+**迭代器的五个相应型别**  
+&emsp;&emsp;通过上面的一个例子，我们大体可以知道如何设计实现一个迭代器。但显然，这个迭代器还不够优秀。有时候，例如在算法中运用迭代器时，可能会需要知道关于迭代器的一些信息：
+1. 迭代器所指对象的数据类型(型别)
+2. 两个迭代器之间的距离
+3. 迭代器的类型reference type
+4. pointer type
+5. iterator_category
+
+这些信息被称为**迭代器相应型别**。
+```声明内嵌型别
 #include <iostream>
 
 template<class T> struct MyIter{
@@ -90,7 +169,7 @@ template<class T> struct MyIter{
     T* ptr;
     MyIter(T* p=0):ptr(p){}
     T& operator*() const{
-        return *ptr;
+        return *ptr; 
     }
 };
 
