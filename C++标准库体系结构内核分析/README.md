@@ -152,15 +152,16 @@ template <class T> class auto_ptr {//虽然，这个智能指针已经被弃用�
 
 
 ___
-**迭代器的五个相应型别**  
+ **迭代器的五个相应型别**  
 &emsp;&emsp;通过上面的一个例子，我们大体可以知道如何设计实现一个迭代器。但显然，这个迭代器还不够优秀。有时候，例如在算法中运用迭代器时，可能会需要知道关于迭代器的一些信息：
-1. 迭代器所指对象的数据类型(型别)
-2. 两个迭代器之间的距离
-3. 迭代器的类型reference type
-4. pointer type
+1. value type：迭代器所指对象的数据类型(型别)
+2. difference type：两个迭代器之间的距离
+3. reference type：迭代器的类型，能否改变迭代器所指对象的内容
+4. pointer type：
 5. iterator_category
 
 这些信息被称为**迭代器相应型别**。
+
 ```声明内嵌型别
 #include <iostream>
 
